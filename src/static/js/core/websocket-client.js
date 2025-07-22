@@ -22,7 +22,12 @@ export class MultimodalLiveClient extends EventEmitter {
     constructor() {
         super();
         // Use the local Deno server as a proxy
-        this.baseUrl = `ws://${window.location.hostname}:8000/ws`;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname;
+        // Use port 8000 for local development, but no port for production (Deno Deploy handles it)
+        const port = hostname === 'localhost' || hostname === '127.0.0.1' ? ':8000' : '';
+        this.baseUrl = `${protocol}//${hostname}${port}/ws`;
+        
         this.ws = null;
         this.config = null;
         this.send = this.send.bind(this);
