@@ -154,13 +154,10 @@ async function handler(request: Request): Promise<Response> {
   }
 
   // 统一处理所有静态文件请求
-  // 使用 import.meta.url 来确保静态文件路径的正确性
-  const staticFilesRoot = new URL("../static", import.meta.url).pathname;
-
   return serveDir(request, {
-    fsRoot: staticFilesRoot, // 静态文件根目录
-    urlRoot: "",             // URL根路径
-    showDirListing: true,    // 如果找不到index.html，可以选择显示目录
+    fsRoot: "./src/static", // 静态文件根目录
+    urlRoot: "",           // URL根路径
+    showDirListing: true,  // 如果找不到index.html，可以选择显示目录
     quiet: true,
   });
 }
