@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试展开运算符修复</title>
+</head>
+<body>
+    <h1>测试展开运算符修复</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import { ToolManager } from './src/static/js/tools/tool-manager.js';
+        import { MultimodalLiveClient } from './src/static/js/core/websocket-client.js';
+        
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += `<p>${message}</p>`;
+            console.log(message);
+        }
+        
+        try {
+            // 测试ToolManager
+            log('测试ToolManager...');
+            const toolManager = new ToolManager();
+            const declarations = toolManager.getToolDeclarations();
+            log(`工具声明: ${JSON.stringify(declarations, null, 2)}`);
+            
+            // 验证返回的是数组
+            if (Array.isArray(declarations)) {
+                log('✅ ToolManager.getToolDeclarations() 返回了数组');
+            } else {
+                log('❌ ToolManager.getToolDeclarations() 没有返回数组');
+            }
+            
+            // 测试MultimodalLiveClient
+            log('测试MultimodalLiveClient...');
+            const client = new MultimodalLiveClient();
+            
+            // 模拟connect方法中的配置
+            const mockConfig = {
+                model: 'gemini-2.0-flash-exp',
+                generationConfig: {
+                    responseModalities: ['audio', 'text']
+                }
+            };
+            
+            // 测试配置构建
+            const toolDeclarations2 = toolManager.getToolDeclarations() || [];
+            const configTools = Array.isArray(mockConfig.tools) ? mockConfig.tools : [];
+            
+            const testConfig = {
+                ...mockConfig,
+                tools: [
+                    ...toolDeclarations2,
+                    ...configTools
+                ]
+            };
+            
+            log('✅ 配置构建成功，没有展开运算符错误');
+            log(`最终配置: ${JSON.stringify(testConfig.tools, null, 2)}`);
+            
+        } catch (error) {
+            log(`❌ 错误: ${error.message}`);
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

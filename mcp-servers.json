@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "baidu-maps": {
+      "command": "deno",
+      "args": ["run", "--allow-net", "--allow-env", "./mcp-servers/baidu-maps-server-deno.js"],
+      "env": {
+        "BAIDU_MAPS_API_KEY": "K0RhNE8R4HEF00DNhat61mmqaIlROWAL"
+      }
+    }
+  }
+}

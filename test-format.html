@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>工具格式测试</title>
+</head>
+<body>
+    <h1>工具声明格式测试</h1>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import { ToolManager } from './src/static/js/tools/tool-manager.js';
+        
+        const toolManager = new ToolManager();
+        const declarations = toolManager.getToolDeclarations();
+        
+        const output = document.getElementById('output');
+        output.textContent = JSON.stringify(declarations, null, 2);
+        
+        // 验证格式
+        const isValid = declarations.every(d => 
+            typeof d === 'object' && 
+            Array.isArray(d.functionDeclarations) && 
+            d.functionDeclarations.every(fd => 
+                typeof fd === 'object' && 
+                typeof fd.name === 'string' && 
+                typeof fd.description === 'string' && 
+                typeof fd.parameters === 'object'
+            )
+        );
+        
+        output.textContent += '\n\n格式验证: ' + (isValid ? '✅ 正确' : '❌ 错误');
+    </script>
+</body>
+</html>

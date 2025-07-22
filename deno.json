@@ -1,0 +1,39 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-read --allow-env src/deno_index.ts",
+    "dev": "deno run --allow-net --allow-read --allow-env --watch src/deno_server.ts"
+  },
+  "importMap": "./import_map.json",
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable",
+      "deno.ns",
+      "deno.unstable"
+    ]
+  },
+  "lint": {
+    "files": {
+      "include": ["src/"],
+      "exclude": ["src/static/"]
+    },
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "include": ["src/"],
+      "exclude": ["src/static/"]
+    },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 100,
+      "indentWidth": 2,
+      "singleQuote": false,
+      "proseWrap": "preserve"
+    }
+  }
+}

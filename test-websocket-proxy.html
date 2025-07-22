@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket代理测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket代理测试</h1>
+    
+    <div class="container">
+        <h3>连接配置</h3>
+        <label>API Key:</label>
+        <input type="text" id="apiKey" placeholder="输入Google API密钥" value="AIzaSyDmmq0orZuNuZVOS7YVfIOH2JmYfhoc_p0">
+        <button onclick="connect()">连接WebSocket</button>
+        <button onclick="disconnect()">断开连接</button>
+        <br><br>
+        <button onclick="testDirect()">测试直接连接</button>
+        <button onclick="testProxy()">测试本地代理</button>
+        <button onclick="clearLog()">清除日志</button>
+    </div>
+
+    <div class="container">
+        <h3>消息发送</h3>
+        <input type="text" id="message" placeholder="输入要发送的消息" value="你好，这是一个测试消息">
+        <button onclick="sendMessage()">发送消息</button>
+    </div>
+
+    <div class="container">
+        <h3>连接状态</h3>
+        <div id="status">未连接</div>
+    </div>
+
+    <div class="container">
+        <h3>日志</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="debug-websocket.js"></script>
+    <script>
+        let ws = null;
+        let wsDebugger = new WebSocketDebugger();
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(status) {
+            document.getElementById('status').textContent = status;
+        }
+
+        async function testDirect() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            log('开始直接连接测试...');
+            try {
+                await wsDebugger.testConnection(apiKey);
+                log('✅ 直接连接测试成功');
+            } catch (error) {
+                log('❌ 直接连接测试失败: ' + error);
+            }
+        }
+
+        async function testProxy() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            log('开始本地代理测试...');
+            try {
+                await wsDebugger.testLocalProxy(apiKey);
+                log('✅ 本地代理测试成功');
+            } catch (error) {
+                log('❌ 本地代理测试失败: ' + error);
+            }
+        }
+
+        function connect() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            const wsUrl = `ws://localhost:8000/ws?key=${apiKey}`;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    log('WebSocket连接已建立');
+                    updateStatus('已连接');
+                    
+                    // 发送最简化的配置
+                    const setupMessage = {
+                        setup: {
+                            model: "models/gemini-2.5-pro-exp-0827"
+                        }
+                    };
+                    
+                    ws.send(JSON.stringify(setupMessage));
+                    log('已发送简化配置');
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`收到消息: ${JSON.stringify(data, null, 2)}`);
+                    } catch (e) {
+                        log(`收到原始消息: ${event.data}`);
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    log(`连接已关闭: ${event.code} - ${event.reason}`);
+                    updateStatus('已断开');
+                };
+                
+                ws.onerror = function(error) {
+                    log(`发生错误: ${error}`);
+                    updateStatus('错误');
+                };
+                
+            } catch (error) {
+                log(`连接失败: ${error}`);
+                updateStatus('连接失败');
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                updateStatus('已断开');
+                log('手动断开连接');
+            }
+        }
+
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('WebSocket未连接');
+                return;
+            }
+            
+            const message = document.getElementById('message').value;
+            if (!message) {
+                alert('请输入消息内容');
+                return;
+            }
+            
+            const clientMessage = {
+                clientContent: {
+                    turns: [{
+                        role: "user",
+                        parts: [{
+                            text: message
+                        }]
+                    }],
+                    turnComplete: true
+                }
+            };
+            
+            ws.send(JSON.stringify(clientMessage));
+            log(`发送消息: ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            wsDebugger.logs = [];
+        }
+    </script>
+</body>
+</html>
