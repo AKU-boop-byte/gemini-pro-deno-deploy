@@ -389,16 +389,18 @@ async function handleVerification() {
     const ip = await getIPAddress();
     if (!ip) {
         logMessage('Could not verify IP address. Please try again.', 'system');
-        return;
+        // Even if IP fails, proceed with manual verification
     }
 
     const verifiedIPs = JSON.parse(localStorage.getItem('verified_ips') || '[]');
-    if (verifiedIPs.includes(ip)) {
+    if (ip && verifiedIPs.includes(ip)) {
+        // IP is known, connect directly
         connectToWebsocket();
         return;
     }
 
-    verificationModal.style.display = 'block';
+    // New IP or IP check failed, show verification modal
+    verificationModal.style.display = 'flex';
 }
 
 verifyKeyButton.addEventListener('click', () => {
@@ -422,7 +424,7 @@ submitUserInfoButton.addEventListener('click', async () => {
     
     const formData = new FormData();
     formData.append('name', userName);
-    formData.append('ip_address', ip);
+    formData.append('ip_address', ip || 'Unknown');
 
     try {
         const response = await fetch('https://formspree.io/f/mrblbwpj', {
@@ -437,11 +439,15 @@ submitUserInfoButton.addEventListener('click', async () => {
             logMessage('用户访问信息已记录。', 'system');
             if (ip) {
                 const verifiedIPs = JSON.parse(localStorage.getItem('verified_ips') || '[]');
-                verifiedIPs.push(ip);
-                localStorage.setItem('verified_ips', JSON.stringify(verifiedIPs));
+                if (!verifiedIPs.includes(ip)) {
+                    verifiedIPs.push(ip);
+                    localStorage.setItem('verified_ips', JSON.stringify(verifiedIPs));
+                }
             }
             userInfoModal.style.display = 'none';
-            connectToWebsocket();
+            // Do not auto-connect here, let user click the connect button
+            logMessage('验证完成，请点击 "Connect" 按钮开始。', 'system');
+            connectButton.disabled = false; // Enable connect button after verification
         } else {
             throw new Error('表单提交失败');
         }
@@ -537,8 +543,7 @@ connectButton.addEventListener('click', () => {
     if (isConnected) {
         disconnectFromWebsocket();
     } else {
-        // Bypassing verification for testing
-        connectToWebsocket();
+        handleVerification();
     }
 });
 
@@ -546,6 +551,7 @@ messageInput.disabled = true;
 sendButton.disabled = true;
 micButton.disabled = true;
 connectButton.textContent = 'Connect';
+connectButton.disabled = false; // Allow clicking connect to start verification
 
 /**
  * Handles the video toggle. Starts or stops video streaming.
@@ -729,4 +735,11 @@ window.addEventListener('click', (event) => {
     if (event.target == contactModal) {
         hideContact();
     }
+});
+
+// Initial check on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if already verified, if so, user can just click connect.
+    // The handleVerification function will take care of the logic.
+    logMessage('欢迎使用，请点击 "Connect" 开始。', 'system');
 });

@@ -9,3 +9,4 @@
 .dev.vars
 .wrangler/
 deno.lock
+deno.exe
