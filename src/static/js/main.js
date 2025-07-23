@@ -424,9 +424,8 @@ submitUserInfoButton.addEventListener('click', async () => {
             localStorage.setItem('is_user_verified', 'true');
             
             userInfoModal.style.display = 'none';
-            // Do not auto-connect here, let user click the connect button
-            logMessage('验证完成，请点击 "Connect" 按钮开始。', 'system');
-            connectButton.disabled = false; // Enable connect button after verification
+            logMessage('验证完成，正在自动连接...', 'system');
+            connectToWebsocket(); // Automatically connect after verification
         } else {
             throw new Error('表单提交失败');
         }
