@@ -386,20 +386,16 @@ async function getIPAddress() {
 }
 
 async function handleVerification() {
-    const ip = await getIPAddress();
-    if (!ip) {
-        logMessage('Could not verify IP address. Please try again.', 'system');
-        // Even if IP fails, proceed with manual verification
-    }
+    // Use a simple flag in localStorage instead of IP for more stable verification on mobile
+    const isVerified = localStorage.getItem('is_user_verified');
 
-    const verifiedIPs = JSON.parse(localStorage.getItem('verified_ips') || '[]');
-    if (ip && verifiedIPs.includes(ip)) {
-        // IP is known, connect directly
+    if (isVerified === 'true') {
+        // User has verified on this device before, connect directly
         connectToWebsocket();
         return;
     }
 
-    // New IP or IP check failed, show verification modal
+    // New user on this device, show verification modal
     verificationModal.style.display = 'flex';
 }
 
@@ -437,13 +433,9 @@ submitUserInfoButton.addEventListener('click', async () => {
 
         if (response.ok) {
             logMessage('用户访问信息已记录。', 'system');
-            if (ip) {
-                const verifiedIPs = JSON.parse(localStorage.getItem('verified_ips') || '[]');
-                if (!verifiedIPs.includes(ip)) {
-                    verifiedIPs.push(ip);
-                    localStorage.setItem('verified_ips', JSON.stringify(verifiedIPs));
-                }
-            }
+            // Set the verification flag in localStorage
+            localStorage.setItem('is_user_verified', 'true');
+            
             userInfoModal.style.display = 'none';
             // Do not auto-connect here, let user click the connect button
             logMessage('验证完成，请点击 "Connect" 按钮开始。', 'system');
