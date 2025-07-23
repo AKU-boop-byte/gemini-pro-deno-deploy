@@ -374,17 +374,6 @@ function handleSendMessage() {
     }
 }
 
-async function getIPAddress() {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        return data.ip;
-    } catch (error) {
-        Logger.error('Error getting IP address:', error);
-        return null;
-    }
-}
-
 async function handleVerification() {
     // Use a simple flag in localStorage instead of IP for more stable verification on mobile
     const isVerified = localStorage.getItem('is_user_verified');
@@ -415,12 +404,10 @@ submitUserInfoButton.addEventListener('click', async () => {
         alert('请填写您的名称或ID！');
         return;
     }
-
-    const ip = await getIPAddress();
     
     const formData = new FormData();
     formData.append('name', userName);
-    formData.append('ip_address', ip || 'Unknown');
+    // IP address is no longer sent
 
     try {
         const response = await fetch('https://formspree.io/f/mrblbwpj', {
